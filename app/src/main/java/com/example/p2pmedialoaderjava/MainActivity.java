@@ -134,7 +134,7 @@ public class MainActivity extends AppCompatActivity {
     protected void onStart() {
         super.onStart();
         if (p2pMediaLoader != null) {
-            p2pMediaLoader.applyDynamicConfig("{ \"isP2PDisabled\": true }");
+            p2pMediaLoader.applyDynamicConfig("{ \"isP2PDisabled\": false }");
         }
     }
 
@@ -142,7 +142,7 @@ public class MainActivity extends AppCompatActivity {
     protected void onStop() {
         super.onStop();
         if (p2pMediaLoader != null) {
-            p2pMediaLoader.applyDynamicConfig("{ \"isP2PDisabled\": false }");
+            p2pMediaLoader.applyDynamicConfig("{ \"isP2PDisabled\": true }");
         }
     }
 
