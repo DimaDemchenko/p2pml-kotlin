@@ -39,8 +39,11 @@ public class MainActivity extends AppCompatActivity {
 
     private void setupPlayer(@NonNull String manifestUrl) {
         MediaItem mediaItem = MediaItem.fromUri(manifestUrl);
-        HlsMediaSource mediaSource = new HlsMediaSource.Factory(new DefaultHttpDataSource.Factory())
-                .createMediaSource(mediaItem);
+        HlsMediaSource mediaSource = new HlsMediaSource.Factory(
+                new DefaultHttpDataSource.Factory()
+                        .setConnectTimeoutMs(15000)
+                        .setReadTimeoutMs(15000)
+        ).createMediaSource(mediaItem);
 
         exoPlayer = new ExoPlayer.Builder(this).build();
         playerView.setPlayer(exoPlayer);
