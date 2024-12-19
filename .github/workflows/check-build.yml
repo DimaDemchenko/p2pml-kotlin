@@ -20,5 +20,10 @@ jobs:
           distribution: 'temurin'
           java-version: '17'
 
+      - name: Setup Android SDK
+        uses: android/setup-android@v3
+        with:
+          sdk-version: '35'
+
       - name: Build with Gradle
         run: ./gradlew clean build
