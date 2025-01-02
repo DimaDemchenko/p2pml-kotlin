@@ -35,7 +35,7 @@ dependencies {
     implementation(libs.androidx.media3.exoplayer)
     implementation(libs.androidx.media3.exoplayer.hls)
     implementation(libs.androidx.media3.ui)
-    implementation("com.github.DimaDemchenko:p2pml-kotlin:4689afae4f")
+    implementation("com.github.DimaDemchenko:p2pml-kotlin:eba4f22eb4")
 
 
     implementation(libs.appcompat)

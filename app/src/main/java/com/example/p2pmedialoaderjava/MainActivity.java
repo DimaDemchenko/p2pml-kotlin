@@ -1,12 +1,11 @@
 package com.example.p2pmedialoaderjava;
 
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
 import android.widget.ProgressBar;
 import android.widget.TextView;
-
 import androidx.activity.EdgeToEdge;
-import androidx.annotation.NonNull;
 import androidx.annotation.OptIn;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.graphics.Insets;
@@ -20,8 +19,7 @@ import androidx.media3.exoplayer.ExoPlayer;
 import androidx.media3.exoplayer.hls.HlsMediaSource;
 import androidx.media3.ui.PlayerView;
 
-import com.example.p2pml.P2PMediaLoader;
-import com.example.p2pml.interop.P2PMediaLoaderJavaBridge;
+import com.novage.p2pml.P2PMediaLoader;
 
 @UnstableApi
 public class MainActivity extends AppCompatActivity {
@@ -29,15 +27,18 @@ public class MainActivity extends AppCompatActivity {
     private static final int SERVER_PORT = 8081;
     private static final String CORE_CONFIG_JSON = "{\"swarmId\":\"TEST_KOTLIN\"}";
 
-    private P2PMediaLoaderJavaBridge p2pMediaLoaderBridge;
-    private P2PMediaLoader p2pMediaLoader;
     private ExoPlayer exoPlayer;
+    private P2PMediaLoader p2pMediaLoader;
 
     private PlayerView playerView;
     private ProgressBar loadingIndicator;
     private TextView videoTitle;
 
-    private void setupPlayer(@NonNull String manifestUrl) {
+    private void setupPlayer() {
+        exoPlayer = new ExoPlayer.Builder(this).build();
+
+        String manifestUrl = p2pMediaLoader.getManifestUrl(MANIFEST_URL);
+
         MediaItem mediaItem = MediaItem.fromUri(manifestUrl);
         HlsMediaSource mediaSource = new HlsMediaSource.Factory(
                 new DefaultHttpDataSource.Factory()
@@ -45,7 +46,6 @@ public class MainActivity extends AppCompatActivity {
                         .setReadTimeoutMs(15000)
         ).createMediaSource(mediaItem);
 
-        exoPlayer = new ExoPlayer.Builder(this).build();
         playerView.setPlayer(exoPlayer);
 
         exoPlayer.setMediaSource(mediaSource);
@@ -64,21 +64,28 @@ public class MainActivity extends AppCompatActivity {
         p2pMediaLoader.attachPlayer(exoPlayer);
     }
 
+    private void onError(String error) {
+        // Handle error
+        Log.d("Error while initializing P2P Media Loader", error);
+    }
+
     @OptIn(markerClass = UnstableApi.class)
     private void initializeP2PMediaLoader() {
-        p2pMediaLoader = new P2PMediaLoader.Builder()
-                .setServerPort(SERVER_PORT)
-                .setCoreConfig(CORE_CONFIG_JSON)
-                .build();
-        p2pMediaLoader.start(this);
+        p2pMediaLoader = new P2PMediaLoader(
+                this::setupPlayer,
+                this::onError,
+                SERVER_PORT,
+                CORE_CONFIG_JSON
+        );
 
-        p2pMediaLoaderBridge = new P2PMediaLoaderJavaBridge();
+        p2pMediaLoader.start(this);
     }
 
     private void initializeUI() {
         playerView = findViewById(R.id.playerView);
         loadingIndicator = findViewById(R.id.loadingIndicator);
         videoTitle = findViewById(R.id.videoTitle);
+
         loadingIndicator.setVisibility(View.VISIBLE);
     }
 
@@ -100,12 +107,6 @@ public class MainActivity extends AppCompatActivity {
         initializeUI();
         initializeP2PMediaLoader();
 
-        p2pMediaLoaderBridge.getManifestUrlAsync(
-                p2pMediaLoader,
-                MANIFEST_URL,
-                this::setupPlayer
-        );
-
         applyWindowInsets();
     }
 
@@ -120,13 +121,6 @@ public class MainActivity extends AppCompatActivity {
         if (p2pMediaLoader != null) {
             p2pMediaLoader.stop();
             p2pMediaLoader = null;
-        }
-    }
-
-    private void destroyP2PMediaLoaderBridge() {
-        if (p2pMediaLoaderBridge != null) {
-            p2pMediaLoaderBridge.destroy();
-            p2pMediaLoaderBridge = null;
         }
     }
 
@@ -151,6 +145,5 @@ public class MainActivity extends AppCompatActivity {
         super.onDestroy();
         releasePlayer();
         stopP2PMediaLoader();
-        destroyP2PMediaLoaderBridge();
     }
 }
