@@ -20,6 +20,6 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "P2PML-Kotlin"
+rootProject.name = "P2P Media Loader Android"
 include(":app")
 include(":p2pml")
