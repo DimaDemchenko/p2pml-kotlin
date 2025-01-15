@@ -39,8 +39,13 @@ internal data class SegmentRequest(
     val segmentUrl: String,
 )
 
+/**
+ * Playback info
+ * @param currentPlayPosition current play position in seconds
+ * @param currentPlaySpeed current play speed
+ */
 @Serializable
-internal data class PlaybackInfo(
+data class PlaybackInfo(
     val currentPlayPosition: Double,
     val currentPlaySpeed: Float,
 )

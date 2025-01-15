@@ -1,4 +1,4 @@
-package com.novage.p2pml.utils
+package com.novage.p2pml.providers
 
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.exoplayer.ExoPlayer
@@ -18,18 +18,14 @@ private data class PlaybackSegment(
 )
 
 @UnstableApi
-internal class ExoPlayerPlaybackCalculator {
-    private var exoPlayer: ExoPlayer? = null
-
+internal class ExoPlayerPlaybackProvider(
+    private val exoPlayer: ExoPlayer,
+) : PlaybackProvider {
     private var currentMediaPlaylist: HlsMediaPlaylist? = null
     private var currentAbsoluteTime: Double? = null
 
     private var currentSegments = mutableMapOf<Long, PlaybackSegment>()
     private val mutex = Mutex()
-
-    fun setExoPlayer(exoPlayer: ExoPlayer) {
-        this.exoPlayer = exoPlayer
-    }
 
     private fun removeObsoleteSegments(removeUntilId: Long) {
         val obsoleteIds = currentSegments.keys.filter { it < removeUntilId }
@@ -79,7 +75,7 @@ internal class ExoPlayerPlaybackCalculator {
             )
     }
 
-    suspend fun getAbsolutePlaybackPosition(parsedMediaPlaylist: HlsMediaPlaylist): Double =
+    override suspend fun getAbsolutePlaybackPosition(parsedMediaPlaylist: HlsMediaPlaylist): Double =
         mutex.withLock {
             currentMediaPlaylist = parsedMediaPlaylist
 
@@ -101,15 +97,13 @@ internal class ExoPlayerPlaybackCalculator {
             return@withLock currentAbsoluteTime!!
         }
 
-    suspend fun getPlaybackPositionAndSpeed(): PlaybackInfo =
+    override suspend fun getPlaybackPositionAndSpeed(): PlaybackInfo =
         mutex.withLock {
-            val player = exoPlayer ?: throw IllegalStateException("ExoPlayer instance is null")
-
             val playbackPositionInSeconds =
                 withContext(Dispatchers.Main) {
-                    player.currentPosition / 1000.0
+                    exoPlayer.currentPosition / 1000.0
                 }
-            val playbackSpeed = withContext(Dispatchers.Main) { player.playbackParameters.speed }
+            val playbackSpeed = withContext(Dispatchers.Main) { exoPlayer.playbackParameters.speed }
 
             if (currentMediaPlaylist == null || currentMediaPlaylist?.hasEndTag == true) {
                 return PlaybackInfo(playbackPositionInSeconds, playbackSpeed)
@@ -133,15 +127,10 @@ internal class ExoPlayerPlaybackCalculator {
             return PlaybackInfo(segmentAbsolutePlayTime, playbackSpeed)
         }
 
-    suspend fun resetData() =
+    override suspend fun resetData() =
         mutex.withLock {
             currentSegments.clear()
             currentMediaPlaylist = null
             currentAbsoluteTime = null
         }
-
-    suspend fun reset() {
-        resetData()
-        exoPlayer = null
-    }
 }

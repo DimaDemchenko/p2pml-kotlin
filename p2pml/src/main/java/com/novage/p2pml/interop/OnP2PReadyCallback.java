@@ -1,5 +1,5 @@
 package com.novage.p2pml.interop;
 
-public interface P2PReadyCallback {
+public interface OnP2PReadyCallback {
     void onReady();
 }

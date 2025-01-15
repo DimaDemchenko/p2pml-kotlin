@@ -1,7 +1,6 @@
 package com.novage.p2pml.parser
 
 import androidx.core.net.toUri
-import androidx.media3.common.util.Log
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.exoplayer.hls.playlist.HlsMediaPlaylist
 import androidx.media3.exoplayer.hls.playlist.HlsMultivariantPlaylist
@@ -11,7 +10,7 @@ import com.novage.p2pml.Constants.StreamTypes
 import com.novage.p2pml.Segment
 import com.novage.p2pml.Stream
 import com.novage.p2pml.UpdateStreamParams
-import com.novage.p2pml.utils.ExoPlayerPlaybackCalculator
+import com.novage.p2pml.providers.PlaybackProvider
 import com.novage.p2pml.utils.Utils
 import io.ktor.http.encodeURLQueryComponent
 import kotlinx.coroutines.sync.Mutex
@@ -21,7 +20,7 @@ import kotlinx.serialization.json.Json
 
 @UnstableApi
 internal class HlsManifestParser(
-    private val playbackCalculator: ExoPlayerPlaybackCalculator,
+    private val playbackProvider: PlaybackProvider,
     private val serverPort: Int,
 ) {
     private val parser = HlsPlaylistParser()
@@ -51,7 +50,7 @@ internal class HlsManifestParser(
     suspend fun doesManifestExist(manifestUrl: String): Boolean =
         mutex.withLock {
             currentMasterManifestUrl == manifestUrl ||
-                streams.any { it.runtimeId == manifestUrl }
+                    streams.any { it.runtimeId == manifestUrl }
         }
 
     private suspend fun parseHlsManifest(
@@ -120,12 +119,12 @@ internal class HlsManifestParser(
         return newSegment
     }
 
-    private suspend fun calculateInitialStartTime(
+    private suspend fun getInitialStartTime(
         isLive: Boolean,
         mediaPlaylist: HlsMediaPlaylist,
     ): Double =
         if (isLive) {
-            playbackCalculator.getAbsolutePlaybackPosition(mediaPlaylist)
+            playbackProvider.getAbsolutePlaybackPosition(mediaPlaylist)
         } else {
             0.0
         }
@@ -143,7 +142,7 @@ internal class HlsManifestParser(
         val initializationSegments = mutableSetOf<HlsMediaPlaylist.Segment>()
         val segmentsToAdd = mutableListOf<Segment>()
 
-        val initialStartTime = calculateInitialStartTime(isStreamLive, mediaPlaylist)
+        val initialStartTime = getInitialStartTime(isStreamLive, mediaPlaylist)
         currentSegmentRuntimeIds.clear()
         mediaPlaylist.segments.forEachIndexed { index, segment ->
             if (segment.initializationSegment != null) {
@@ -161,10 +160,6 @@ internal class HlsManifestParser(
                 addNewSegment(manifestUrl, segmentIndex, initialStartTime, segment)
             if (newSegment != null) {
                 segmentsToAdd.add(newSegment)
-                Log.d(
-                    "SegmentHandler",
-                    "Segment: $segmentIndex - ${newSegment.runtimeId}",
-                )
             }
         }
 
@@ -391,7 +386,7 @@ internal class HlsManifestParser(
             manifest.contains(relativeUrlToFind) -> relativeUrlToFind
             else -> throw IllegalStateException(
                 "URL not found in manifest. urlToFind:" +
-                    "$urlToFind, manifestUrl: $manifestUrl",
+                        "$urlToFind, manifestUrl: $manifestUrl",
             )
         }
     }

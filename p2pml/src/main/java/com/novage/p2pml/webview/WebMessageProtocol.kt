@@ -35,11 +35,11 @@ internal class WebMessageProtocol(
     private var wasInitialMessageSent = false
 
     init {
-        setupWebMessageCallback()
+        initializeWebMessageCallback()
     }
 
     @SuppressLint("RequiresFeature")
-    private fun setupWebMessageCallback() {
+    private fun initializeWebMessageCallback() {
         channels[0].setWebMessageCallback(
             object : WebMessagePortCompat.WebMessageCallbackCompat() {
                 override fun onMessage(
@@ -61,9 +61,6 @@ internal class WebMessageProtocol(
     }
 
     private fun handleSegmentIdBytes(arrayBuffer: ByteArray) {
-        if (incomingRequestId == null) {
-            Log.d("WebMessageProtocol", "Error: Empty segment ID")
-        }
         val requestId =
             incomingRequestId
                 ?: throw IllegalStateException("Received segment bytes without a segment ID")
@@ -72,7 +69,7 @@ internal class WebMessageProtocol(
             val deferred = getSegmentResponseCallback(requestId)
 
             if (deferred == null) {
-                Log.d(
+                Log.e(
                     "WebMessageProtocol",
                     "Error: No deferred found for segment ID: $requestId",
                 )
@@ -104,7 +101,7 @@ internal class WebMessageProtocol(
 
             val deferredSegmentBytes = getSegmentResponseCallback(requestId)
             if (deferredSegmentBytes == null) {
-                Log.d(
+                Log.e(
                     "WebMessageProtocol",
                     "Error: No deferred found for segment ID: $segmentId",
                 )
@@ -125,12 +122,6 @@ internal class WebMessageProtocol(
     }
 
     private fun handleSegmentIdMessage(requestId: String) {
-        if (incomingRequestId != null) {
-            Log.d(
-                "WebMessageProtocol",
-                "Received incorrect request ID: $requestId. Expected: $incomingRequestId",
-            )
-        }
         val requestIdToInt =
             requestId.toIntOrNull() ?: throw IllegalStateException("Invalid request ID")
         incomingRequestId = requestIdToInt

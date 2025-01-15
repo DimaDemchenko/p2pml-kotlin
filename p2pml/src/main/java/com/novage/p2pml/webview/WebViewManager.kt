@@ -10,7 +10,7 @@ import androidx.annotation.OptIn
 import androidx.media3.common.util.UnstableApi
 import androidx.webkit.WebViewClientCompat
 import com.novage.p2pml.DynamicP2PCoreConfig
-import com.novage.p2pml.utils.ExoPlayerPlaybackCalculator
+import com.novage.p2pml.providers.PlaybackProvider
 import com.novage.p2pml.utils.P2PStateManager
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
@@ -29,9 +29,9 @@ internal class WebViewManager(
     context: Context,
     private val coroutineScope: CoroutineScope,
     private val engineStateManager: P2PStateManager,
-    private val playbackCalculator: ExoPlayerPlaybackCalculator,
+    private val playbackProvider: PlaybackProvider,
     customJavaScriptInterfaces: List<Pair<String, Any>>,
-    private val onPageLoadFinished: () -> Unit,
+    onPageLoadFinished: () -> Unit,
 ) {
     @SuppressLint("SetJavaScriptEnabled")
     private val webView =
@@ -76,17 +76,13 @@ internal class WebViewManager(
                 while (isActive) {
                     try {
                         if (engineStateManager.isEngineDisabled()) {
-                            Log.d(
-                                "WebViewManager",
-                                "P2P Engine disabled, stopping playback info update.",
-                            )
                             playbackInfoJob?.cancel()
                             playbackInfoJob = null
                             break
                         }
 
                         val currentPlaybackInfo =
-                            playbackCalculator.getPlaybackPositionAndSpeed()
+                            playbackProvider.getPlaybackPositionAndSpeed()
                         val playbackInfoJson = Json.encodeToString(currentPlaybackInfo)
 
                         sendPlaybackInfo(playbackInfoJson)
