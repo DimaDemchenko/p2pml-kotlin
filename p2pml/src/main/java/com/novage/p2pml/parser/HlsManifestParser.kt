@@ -50,7 +50,7 @@ internal class HlsManifestParser(
     suspend fun doesManifestExist(manifestUrl: String): Boolean =
         mutex.withLock {
             currentMasterManifestUrl == manifestUrl ||
-                    streams.any { it.runtimeId == manifestUrl }
+                streams.any { it.runtimeId == manifestUrl }
         }
 
     private suspend fun parseHlsManifest(
@@ -386,7 +386,7 @@ internal class HlsManifestParser(
             manifest.contains(relativeUrlToFind) -> relativeUrlToFind
             else -> throw IllegalStateException(
                 "URL not found in manifest. urlToFind:" +
-                        "$urlToFind, manifestUrl: $manifestUrl",
+                    "$urlToFind, manifestUrl: $manifestUrl",
             )
         }
     }
