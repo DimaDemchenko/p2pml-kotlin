@@ -6,8 +6,8 @@ import androidx.media3.exoplayer.ExoPlayer
 import com.novage.p2pml.Constants.CORE_FILE_URL
 import com.novage.p2pml.Constants.CUSTOM_FILE_URL
 import com.novage.p2pml.Constants.QueryParams.MANIFEST
-import com.novage.p2pml.interop.OnP2PReadyErrorCallback
 import com.novage.p2pml.interop.OnP2PReadyCallback
+import com.novage.p2pml.interop.OnP2PReadyErrorCallback
 import com.novage.p2pml.parser.HlsManifestParser
 import com.novage.p2pml.providers.ExoPlayerPlaybackProvider
 import com.novage.p2pml.providers.ExternalPlaybackProvider
