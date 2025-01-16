@@ -35,7 +35,7 @@ dependencyResolutionManagement {
 Add the following implementation line to your **`build.gradle`** (app module):
 
 ```kotlin
-implementation("com.github.DimaDemchenko:p2pml-kotlin:-SNAPSHOT")
+implementation("com.github.DimaDemchenko:p2pml-kotlin:main-SNAPSHOT")
 ```
 
 ### Step 3: Configure the AndroidManifest
@@ -267,10 +267,10 @@ public class MainActivity extends AppCompatActivity {
         exoPlayer.addListener(new Player.Listener() {
             @Override
             public void onPlaybackStateChanged(int playbackState) {
-                if (playbackState != Player.STATE_READY) return;
-
-                loadingIndicator.setVisibility(View.GONE);
-                videoTitle.setText("Big Buck Bunny");
+                if (playbackState == Player.STATE_READY) {
+                    loadingIndicator.setVisibility(View.GONE);
+                    videoTitle.setText("Big Buck Bunny");
+                }
             }
         });
 
@@ -301,11 +301,11 @@ public class MainActivity extends AppCompatActivity {
     protected void onDestroy() {
         super.onDestroy();
         // Release ExoPlayer resources and stop P2P Media Loader
-        if (p2pMediaLoader != null) {
-            p2pMediaLoader.stop();
-        }
         if (exoPlayer != null) {
             exoPlayer.release();
+        }
+        if (p2pMediaLoader != null) {
+            p2pMediaLoader.stop();
         }
     }
 }
