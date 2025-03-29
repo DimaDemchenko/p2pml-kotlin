@@ -46,6 +46,72 @@
           this.destroyP2PEngine();
         }
         this.core = new Core(this.coreConfig ?? {});
+
+        this.core.addEventListener(
+          "onChunkDownloaded",
+          (bytesLength, downloadSource, peerId) => {
+            Android.onChunkDownloaded(bytesLength, downloadSource, peerId);
+          }
+        );
+
+        this.core.addEventListener(
+          "onChunkUploaded",
+          (bytesLength, peerId) => {
+            Android.onChunkUploaded(bytesLength, peerId);
+          }
+        );
+
+        this.core.addEventListener("onSegmentLoaded", (params) => {
+          Android.onSegmentLoaded(JSON.stringify(params));
+        });
+
+        this.core.addEventListener("onSegmentError", (params) => {
+          Android.onSegmentError(JSON.stringify(params));
+        });
+
+        this.core.addEventListener("onSegmentAbort", (params) => {
+          Android.onSegmentAbort(JSON.stringify(params));
+        });
+
+        this.core.addEventListener("onSegmentStart", (params) => {
+          Android.onSegmentStart(JSON.stringify(params));
+        });
+
+        this.core.addEventListener("onPeerConnect", (params) => {
+          Android.onPeerConnect(JSON.stringify(params));
+        });
+
+        this.core.addEventListener("onPeerClose", (params) => {
+          Android.onPeerClose(JSON.stringify(params));
+        });
+
+        this.core.addEventListener("onPeerError", (params) => {
+          Android.onPeerError(JSON.stringify(params));
+        });
+
+        this.core.addEventListener("onTrackerError", (params) => {
+          const serializableParams = {
+            streamType: params.streamType,
+            error: {
+              message: params.error.message,
+              stack: params.error.stack,
+            },
+          };
+
+          Android.onTrackerError(JSON.stringify(serializableParams));
+        });
+
+        this.core.addEventListener("onTrackerWarning", (params) => {
+          const serializableParams = {
+            streamType: params.streamType,
+            warning: {
+              message: params.warning.message,
+              stack: params.warning.stack,
+            },
+          };
+
+          Android.onTrackerWarning(JSON.stringify(serializableParams));
+        });
       }
 
       listenPort() {

@@ -28,7 +28,8 @@ class MainActivity : ComponentActivity() {
 
         setContent {
             val isLoading by viewModel.loadingState.collectAsState()
-            ExoPlayerScreen(player = viewModel.player, videoTitle = "Test Stream", isLoading)
+            val stats by viewModel.p2pStats.collectAsState()
+            ExoPlayerScreen(player = viewModel.player, videoTitle = "Test Stream", isLoading, stats)
         }
     }
 
