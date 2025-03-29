@@ -2,7 +2,6 @@ package com.novage.p2pml.webview
 
 import android.annotation.SuppressLint
 import android.content.Context
-import android.util.Log
 import android.view.View
 import android.webkit.JavascriptInterface
 import android.webkit.WebView
@@ -10,7 +9,9 @@ import androidx.annotation.OptIn
 import androidx.media3.common.util.UnstableApi
 import androidx.webkit.WebViewClientCompat
 import com.novage.p2pml.DynamicP2PCoreConfig
+import com.novage.p2pml.logger.Logger
 import com.novage.p2pml.providers.PlaybackProvider
+import com.novage.p2pml.utils.EventEmitter
 import com.novage.p2pml.utils.P2PStateManager
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
@@ -30,6 +31,7 @@ internal class WebViewManager(
     private val coroutineScope: CoroutineScope,
     private val engineStateManager: P2PStateManager,
     private val playbackProvider: PlaybackProvider,
+    private val eventEmitter: EventEmitter,
     customJavaScriptInterfaces: List<Pair<String, Any>>,
     onPageLoadFinished: () -> Unit,
 ) {
@@ -41,7 +43,7 @@ internal class WebViewManager(
             webViewClient = WebViewClientCompat()
             visibility = View.GONE
             addJavascriptInterface(
-                JavaScriptInterface(onPageLoadFinished),
+                JavaScriptInterface(onPageLoadFinished, eventEmitter),
                 "Android",
             )
         }
@@ -53,10 +55,7 @@ internal class WebViewManager(
         customJavaScriptInterfaces.forEach { (name, obj) ->
             val isValid = validateJavaScriptInterface(obj)
             if (!isValid) {
-                Log.e(
-                    "WebViewManager",
-                    "Object $obj does not have any methods annotated with @JavascriptInterface",
-                )
+                Logger.e(TAG, "Object $obj does not have any methods annotated with @JavascriptInterface")
                 return@forEach
             }
             webView.addJavascriptInterface(obj, name)
@@ -89,10 +88,7 @@ internal class WebViewManager(
 
                         delay(400)
                     } catch (e: Exception) {
-                        Log.e(
-                            "WebViewManager",
-                            "Error sending playback info: ${e.message}",
-                        )
+                        Logger.d(TAG, "Playback info update failed: ${e.message}")
                     }
                 }
             }
@@ -128,6 +124,7 @@ internal class WebViewManager(
                     null
                 }
         } catch (e: Exception) {
+            Logger.e(TAG, "Failed to determine P2P engine status: ${e.message}")
             null
         }
 
@@ -212,5 +209,9 @@ internal class WebViewManager(
 
         webMessageProtocol.clear()
         destroyWebView()
+    }
+
+    companion object {
+        private const val TAG = "WebViewManager"
     }
 }

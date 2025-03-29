@@ -1,6 +1,7 @@
 package com.novage.p2pml.server
 
 import androidx.media3.common.util.UnstableApi
+import com.novage.p2pml.logger.Logger
 import com.novage.p2pml.parser.HlsManifestParser
 import com.novage.p2pml.utils.P2PStateManager
 import com.novage.p2pml.webview.WebViewManager
@@ -23,6 +24,7 @@ internal class ServerModule(
     private val p2pEngineStateManager: P2PStateManager,
     private val customEngineImplementationPath: String? = null,
     private val onServerStarted: () -> Unit,
+    private val onServerError: (String) -> Unit,
     private val onManifestChanged: suspend () -> Unit,
 ) {
     private var httpClient: OkHttpClient? = null
@@ -31,12 +33,18 @@ internal class ServerModule(
     fun start(port: Int = 8080) {
         if (server != null) return
 
-        server =
-            embeddedServer(CIO, port) {
-                configureCORS(this)
-                configureRouting(this)
-                subscribeToServerStarted(this)
-            }.start(wait = false)
+        try {
+            server =
+                embeddedServer(CIO, port) {
+                    configureCORS(this)
+                    configureRouting(this)
+                    subscribeToServerStarted(this)
+                }.start(wait = false)
+        } catch (e: Exception) {
+            val message = e.message ?: "Failed to start server on port $port"
+            Logger.e(TAG, message, e)
+            onServerError(message)
+        }
     }
 
     private fun stopServer() {
@@ -87,5 +95,9 @@ internal class ServerModule(
             httpClient?.connectionPool?.evictAll()
             httpClient = null
         }
+    }
+
+    companion object {
+        private const val TAG = "ServerModule"
     }
 }
