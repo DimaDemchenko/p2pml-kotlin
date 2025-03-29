@@ -1,7 +1,7 @@
 # P2P Media Loader Mobile
 
 ![Platform: Android](https://img.shields.io/badge/platform-Android-blue)
-[![Kotlin](https://img.shields.io/badge/kotlin-2.1.0-blue.svg?logo=kotlin)](https://kotlinlang.org)
+[![Kotlin](https://img.shields.io/badge/kotlin-2.1.10-blue.svg?logo=kotlin)](https://kotlinlang.org)
 [![Build Status](https://img.shields.io/github/actions/workflow/status/DimaDemchenko/p2pml-kotlin/check-build.yml)](https://github.com/Novage/p2p-media-loader-mobile/actions)
 
 A Kotlin library for peer-to-peer media loading, designed to enhance streaming performance and reduce server load. Seamlessly integrate P2PML into your Android application with minimal setup.
