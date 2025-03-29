@@ -6,13 +6,16 @@ import androidx.media3.exoplayer.ExoPlayer
 import com.novage.p2pml.Constants.CORE_FILE_URL
 import com.novage.p2pml.Constants.CUSTOM_FILE_URL
 import com.novage.p2pml.Constants.QueryParams.MANIFEST
+import com.novage.p2pml.interop.EventListener
 import com.novage.p2pml.interop.OnP2PReadyCallback
 import com.novage.p2pml.interop.OnP2PReadyErrorCallback
+import com.novage.p2pml.logger.Logger
 import com.novage.p2pml.parser.HlsManifestParser
 import com.novage.p2pml.providers.ExoPlayerPlaybackProvider
 import com.novage.p2pml.providers.ExternalPlaybackProvider
 import com.novage.p2pml.providers.PlaybackProvider
 import com.novage.p2pml.server.ServerModule
+import com.novage.p2pml.utils.EventEmitter
 import com.novage.p2pml.utils.P2PStateManager
 import com.novage.p2pml.utils.Utils
 import com.novage.p2pml.webview.WebViewManager
@@ -28,7 +31,7 @@ import kotlinx.coroutines.runBlocking
  *
  * @param onP2PReadyCallback Callback invoked when the P2P engine is ready for use
  * @param onP2PReadyErrorCallback Callback invoked when an error occurs
- * @param coreConfigJson Sets core P2P configurations. See [P2PML Core Config](https://novage.github.io/p2p-media-loader/docs/v2.1.0/types/p2p_media_loader_core.CoreConfig.html)
+ * @param coreConfigJson Sets core P2P configurations. See [P2PML Core Config](https://novage.github.io/p2p-media-loader/docs/v2.1.0/types/p2p-media-loader-core.CoreConfig.html)
  * JSON string with core configurations. Default: empty string (uses default config)
  *
  * @param serverPort Port number for the local server. Default: 8080
@@ -46,22 +49,28 @@ class P2PMediaLoader(
     private val serverPort: Int = Constants.DEFAULT_SERVER_PORT,
     private val customJavaScriptInterfaces: List<Pair<String, Any>> = emptyList(),
     private val customEngineImplementationPath: String? = null,
+    enableDebugLogs: Boolean = false,
 ) {
+    init {
+        Logger.setDebugMode(enableDebugLogs)
+    }
+
     // Second constructor for Java compatibility
     constructor(
         onP2PReadyCallback: OnP2PReadyCallback,
         onP2PReadyErrorCallback: OnP2PReadyErrorCallback,
         serverPort: Int,
         coreConfigJson: String,
+        enableDebugLogs: Boolean,
     ) : this(
         onP2PReadyCallback,
         onP2PReadyErrorCallback,
         coreConfigJson,
         serverPort,
-        emptyList(),
-        null,
+        enableDebugLogs = enableDebugLogs,
     )
 
+    private val eventEmitter = EventEmitter()
     private val engineStateManager = P2PStateManager()
     private var appState = AppState.INITIALIZED
 
@@ -71,6 +80,32 @@ class P2PMediaLoader(
     private var manifestParser: HlsManifestParser? = null
     private var webViewManager: WebViewManager? = null
     private var playbackProvider: PlaybackProvider? = null
+
+    /**
+     * Adds an event listener to the P2P engine.
+     *
+     * @param event Event type to listen for
+     * @param listener Callback function to invoke when the event occurs
+     */
+    fun <T> addEventListener(
+        event: CoreEventMap<T>,
+        listener: EventListener<T>,
+    ) {
+        eventEmitter.addEventListener(event, listener)
+    }
+
+    /**
+     * Removes an event listener from the P2P engine.
+     *
+     * @param event Event type to remove the listener from
+     * @param listener Callback function to remove
+     */
+    fun <T> removeEventListener(
+        event: CoreEventMap<T>,
+        listener: EventListener<T>,
+    ) {
+        eventEmitter.removeEventListener(event, listener)
+    }
 
     /**
      * Initializes and starts P2P media streaming components.
@@ -83,6 +118,7 @@ class P2PMediaLoader(
         context: Context,
         exoPlayer: ExoPlayer,
     ) {
+        Logger.d(TAG, "Starting P2P Media Loader with ExoPlayer")
         prepareStart(context, ExoPlayerPlaybackProvider(exoPlayer))
     }
 
@@ -97,6 +133,7 @@ class P2PMediaLoader(
         context: Context,
         getPlaybackInfo: () -> PlaybackInfo,
     ) {
+        Logger.d(TAG, "Starting P2P Media Loader with playback info callback")
         prepareStart(context, ExternalPlaybackProvider(getPlaybackInfo))
     }
 
@@ -105,7 +142,9 @@ class P2PMediaLoader(
         provider: PlaybackProvider,
     ) {
         if (appState == AppState.STARTED) {
-            throw IllegalStateException("Cannot start P2PMediaLoader in state: $appState")
+            val errorMessage = "Cannot start P2PMediaLoader in state: $appState"
+            Logger.e(TAG, errorMessage)
+            throw IllegalStateException(errorMessage)
         }
 
         job = Job()
@@ -128,6 +167,7 @@ class P2PMediaLoader(
                 scope!!,
                 engineStateManager,
                 playbackProvider,
+                eventEmitter,
                 customJavaScriptInterfaces,
                 onPageLoadFinished = { onWebViewLoaded() },
             )
@@ -139,6 +179,7 @@ class P2PMediaLoader(
                 engineStateManager,
                 customEngineImplementationPath,
                 onServerStarted = { onServerStarted() },
+                onServerError = { onP2PReadyErrorCallback.onError(it) },
                 onManifestChanged = { onManifestChanged() },
             ).apply { start(serverPort) }
     }
@@ -147,7 +188,7 @@ class P2PMediaLoader(
      * Applies dynamic core configurations to the `P2PMediaLoader` engine.
      *
      * @param dynamicCoreConfigJson A JSON string containing dynamic core configurations for the P2P engine.
-     * Refer to the [DynamicCoreConfig Documentation](https://novage.github.io/p2p-media-loader/docs/v2.1.0/types/p2p_media_loader_core.DynamicCoreConfig.html).
+     * Refer to the [DynamicCoreConfig Documentation](https://novage.github.io/p2p-media-loader/docs/v2.1.0/types/p2p-media-loader-core.DynamicCoreConfig.html).
      * @throws IllegalStateException if P2PMediaLoader is not started
      */
     fun applyDynamicConfig(dynamicCoreConfigJson: String) {
@@ -172,7 +213,9 @@ class P2PMediaLoader(
 
     private fun ensureStarted() {
         if (appState != AppState.STARTED) {
-            throw IllegalStateException("Operation not allowed in state: $appState")
+            val errorMessage = "Operation not allowed in state: $appState"
+            Logger.e(TAG, errorMessage)
+            throw IllegalStateException(errorMessage)
         }
     }
 
@@ -183,9 +226,9 @@ class P2PMediaLoader(
      * @throws IllegalStateException if P2PMediaLoader is not started
      */
     fun stop() {
-        if (appState != AppState.STARTED) {
-            throw IllegalStateException("Cannot stop P2PMediaLoader in state: $appState")
-        }
+        ensureStarted()
+
+        Logger.d(TAG, "Stopping P2PMediaLoader...")
 
         runBlocking {
             webViewManager?.destroy()
@@ -201,6 +244,7 @@ class P2PMediaLoader(
             playbackProvider = null
 
             engineStateManager.reset()
+            eventEmitter.removeAllListeners()
 
             appState = AppState.STOPPED
 
@@ -208,18 +252,21 @@ class P2PMediaLoader(
             job = null
             scope = null
         }
+        Logger.d(TAG, "P2PMediaLoader stopped and resources freed.")
     }
 
     private suspend fun onManifestChanged() {
+        Logger.d(TAG, "Manifest changed, resetting data")
         playbackProvider!!.resetData()
         manifestParser!!.reset()
     }
 
     private fun onWebViewLoaded() {
         scope!!.launch {
-            webViewManager!!.initCoreEngine(coreConfigJson)
-
             try {
+                Logger.d(TAG, "WebView loaded, initializing P2P engine")
+                webViewManager!!.initCoreEngine(coreConfigJson)
+                Logger.d(TAG, "P2P engine initialized, notifying onP2PReadyCallback")
                 onP2PReadyCallback.onReady()
             } catch (e: Exception) {
                 onP2PReadyErrorCallback.onError(e.message ?: "Unknown error")
@@ -228,6 +275,7 @@ class P2PMediaLoader(
     }
 
     private fun onServerStarted() {
+        Logger.d(TAG, "Server started on port $serverPort")
         val urlPath =
             if (customEngineImplementationPath != null) {
                 Utils.getUrl(serverPort, CUSTOM_FILE_URL)
@@ -235,6 +283,15 @@ class P2PMediaLoader(
                 Utils.getUrl(serverPort, CORE_FILE_URL)
             }
 
-        webViewManager!!.loadWebView(urlPath)
+        try {
+            Logger.d(TAG, "Loading WebView with URL: $urlPath")
+            webViewManager!!.loadWebView(urlPath)
+        } catch (e: Exception) {
+            onP2PReadyErrorCallback.onError(e.message ?: "Unknown error")
+        }
+    }
+
+    companion object {
+        private const val TAG = "P2PMediaLoader"
     }
 }
