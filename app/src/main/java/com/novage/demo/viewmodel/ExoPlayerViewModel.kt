@@ -17,9 +17,12 @@ import androidx.media3.datasource.TransferListener
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.exoplayer.hls.HlsMediaSource
 import com.novage.demo.Streams
+import com.novage.demo.stats.P2PStats
+import com.novage.demo.stats.P2PStatsTracker
 import com.novage.p2pml.P2PMediaLoader
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 
 @UnstableApi
@@ -31,22 +34,37 @@ class ExoPlayerViewModel(application: Application) : AndroidViewModel(applicatio
         ExoPlayer.Builder(context).build()
     }
     private var p2pml: P2PMediaLoader? = null
+    private var p2pStatsTracker: P2PStatsTracker? = null
+
+    private val _p2pStats = MutableStateFlow(P2PStats())
+    val p2pStats: StateFlow<P2PStats> get() = _p2pStats
 
     private val _loadingState = MutableStateFlow(true)
     val loadingState: StateFlow<Boolean> get() = _loadingState
 
     fun setupP2PML() {
         p2pml = P2PMediaLoader(
-            onP2PReadyCallback = { initializePlayback() },
+            onP2PReadyCallback = {
+                initializePlayback()
+                p2pStatsTracker?.startTracking()
+            },
             onP2PReadyErrorCallback = { onReadyError(it) },
             coreConfigJson = "{\"swarmId\":\"TEST_KOTLIN\"}",
             serverPort = 8081,
         )
+
+        p2pStatsTracker = P2PStatsTracker(p2pml!!)
         p2pml!!.start(context, player)
+
+        viewModelScope.launch {
+            p2pStatsTracker?.statsFlow?.collectLatest { stats ->
+                _p2pStats.value = stats
+            }
+        }
     }
 
     private fun initializePlayback() {
-        val manifest = p2pml?.getManifestUrl(Streams.HLS_BIG_BUCK_BUNNY)
+        val manifest = p2pml?.getManifestUrl(Streams.HLS_BIG_BUCK_BUNNY_QUALITY_4)
             ?: throw IllegalStateException("P2PML is not started")
         val loggingDataSourceFactory = LoggingDataSourceFactory(context)
 
@@ -76,6 +94,7 @@ class ExoPlayerViewModel(application: Application) : AndroidViewModel(applicatio
 
     fun releasePlayer() {
         player.release()
+        p2pStatsTracker?.stopTracking()
         p2pml?.stop()
     }
 
