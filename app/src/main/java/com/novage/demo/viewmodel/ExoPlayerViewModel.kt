@@ -43,18 +43,18 @@ class ExoPlayerViewModel(application: Application) : AndroidViewModel(applicatio
     val loadingState: StateFlow<Boolean> get() = _loadingState
 
     fun setupP2PML() {
-        p2pml = P2PMediaLoader(
-            onP2PReadyCallback = {
+        p2pml = P2PMediaLoader.with(context)
+            .onReady {
                 initializePlayback()
                 p2pStatsTracker?.startTracking()
-            },
-            onP2PReadyErrorCallback = { onReadyError(it) },
-            coreConfigJson = "{\"swarmId\":\"TEST_KOTLIN\"}",
-            serverPort = 8081,
-        )
+            }
+            .onError { onReadyError(it) }
+            .coreConfig("{\"swarmId\":\"TEST_KOTLIN\"}")
+            .serverPort(8081)
+            .build()
 
         p2pStatsTracker = P2PStatsTracker(p2pml!!)
-        p2pml!!.start(context, player)
+        p2pml!!.start(player)
 
         viewModelScope.launch {
             p2pStatsTracker?.statsFlow?.collectLatest { stats ->
