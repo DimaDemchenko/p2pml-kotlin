@@ -6,6 +6,7 @@ import androidx.media3.exoplayer.ExoPlayer
 import com.novage.p2pml.Constants.CORE_FILE_URL
 import com.novage.p2pml.Constants.CUSTOM_FILE_URL
 import com.novage.p2pml.Constants.QueryParams.MANIFEST
+import com.novage.p2pml.builder.P2PMediaLoaderBuilder
 import com.novage.p2pml.interop.EventListener
 import com.novage.p2pml.interop.OnP2PReadyCallback
 import com.novage.p2pml.interop.OnP2PReadyErrorCallback
@@ -42,7 +43,8 @@ import kotlinx.coroutines.runBlocking
  * Default: null (uses built-in implementation)
  */
 @UnstableApi
-class P2PMediaLoader(
+class P2PMediaLoader internal constructor(
+    private val context: Context,
     private val onP2PReadyCallback: OnP2PReadyCallback,
     private val onP2PReadyErrorCallback: OnP2PReadyErrorCallback,
     private val coreConfigJson: String = "",
@@ -54,21 +56,6 @@ class P2PMediaLoader(
     init {
         Logger.setDebugMode(enableDebugLogs)
     }
-
-    // Second constructor for Java compatibility
-    constructor(
-        onP2PReadyCallback: OnP2PReadyCallback,
-        onP2PReadyErrorCallback: OnP2PReadyErrorCallback,
-        serverPort: Int,
-        coreConfigJson: String,
-        enableDebugLogs: Boolean,
-    ) : this(
-        onP2PReadyCallback,
-        onP2PReadyErrorCallback,
-        coreConfigJson,
-        serverPort,
-        enableDebugLogs = enableDebugLogs,
-    )
 
     private val eventEmitter = EventEmitter()
     private val engineStateManager = P2PStateManager()
@@ -110,12 +97,10 @@ class P2PMediaLoader(
     /**
      * Initializes and starts P2P media streaming components.
      *
-     * @param context Android context required for WebView initialization
      * @param exoPlayer ExoPlayer instance for media playback
      * @throws IllegalStateException if called in an invalid state
      */
     fun start(
-        context: Context,
         exoPlayer: ExoPlayer,
     ) {
         Logger.d(TAG, "Starting P2P Media Loader with ExoPlayer")
@@ -125,12 +110,10 @@ class P2PMediaLoader(
     /**
      * Initializes and starts P2P media streaming components.
      *
-     * @param context Android context required for WebView initialization
      * @param getPlaybackInfo Function to retrieve playback information
      * @throws IllegalStateException if called in an invalid state
      */
     fun start(
-        context: Context,
         getPlaybackInfo: () -> PlaybackInfo,
     ) {
         Logger.d(TAG, "Starting P2P Media Loader with playback info callback")
@@ -293,5 +276,8 @@ class P2PMediaLoader(
 
     companion object {
         private const val TAG = "P2PMediaLoader"
+
+        @JvmStatic
+        fun with(context: Context) = P2PMediaLoaderBuilder(context)
     }
 }
