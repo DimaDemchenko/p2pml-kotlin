@@ -4,7 +4,7 @@ import android.util.Log
 import androidx.annotation.OptIn
 import androidx.media3.common.util.UnstableApi
 import com.novage.p2pml.logger.Logger
-import com.novage.p2pml.parser.HlsManifestParser
+import com.novage.p2pml.service.HlsParserService
 import com.novage.p2pml.utils.P2PStateManager
 import com.novage.p2pml.utils.SegmentAbortedException
 import com.novage.p2pml.utils.SegmentNotFoundException
@@ -27,7 +27,7 @@ import okhttp3.Request
 internal class SegmentHandler(
     private val httpClient: OkHttpClient,
     private val webViewManager: WebViewManager,
-    private val parser: HlsManifestParser,
+    private val parserService: HlsParserService,
     private val p2pEngineStateManager: P2PStateManager,
 ) {
     suspend fun handleSegmentRequest(call: ApplicationCall) {
@@ -43,7 +43,7 @@ internal class SegmentHandler(
         Logger.d(TAG, "Handling segment request for $decodedSegmentUrl")
 
         try {
-            val isCurrentSegment = parser.isCurrentSegment(decodedSegmentUrl)
+            val isCurrentSegment = parserService.isCurrentSegment(decodedSegmentUrl)
             if (p2pEngineStateManager.isEngineDisabled() || !isCurrentSegment) {
                 Logger.w(
                     TAG,

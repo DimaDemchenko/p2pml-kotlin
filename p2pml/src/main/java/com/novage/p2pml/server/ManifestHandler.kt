@@ -4,7 +4,7 @@ import androidx.annotation.OptIn
 import androidx.media3.common.util.Log
 import androidx.media3.common.util.UnstableApi
 import com.novage.p2pml.Constants.MPEGURL_CONTENT_TYPE
-import com.novage.p2pml.parser.HlsManifestParser
+import com.novage.p2pml.service.HlsParserService
 import com.novage.p2pml.utils.Utils
 import com.novage.p2pml.webview.WebViewManager
 import io.ktor.http.ContentType
@@ -27,7 +27,7 @@ internal data class ManifestFetchResult(
 @OptIn(UnstableApi::class)
 internal class ManifestHandler(
     private val httpClient: OkHttpClient,
-    private val manifestParser: HlsManifestParser,
+    private val parserService: HlsParserService,
     private val webViewManager: WebViewManager,
     private val onManifestChanged: suspend () -> Unit,
 ) {
@@ -45,7 +45,7 @@ internal class ManifestHandler(
 
         try {
             val fetchResult = fetchManifest(call, decodedManifestUrl)
-            val doesManifestExist = manifestParser.doesManifestExist(decodedManifestUrl)
+            val doesManifestExist = parserService.doesManifestExist(decodedManifestUrl)
 
             if (!doesManifestExist) {
                 reset()
@@ -53,9 +53,9 @@ internal class ManifestHandler(
             }
 
             val modifiedManifest =
-                manifestParser.getModifiedManifest(
-                    fetchResult.manifestContent,
+                parserService.parse(
                     fetchResult.responseUrl,
+                    fetchResult.manifestContent,
                 )
             val needsInitialSetup = checkAndSetInitialProcessing()
 
@@ -74,10 +74,10 @@ internal class ManifestHandler(
         needsInitialSetup: Boolean,
     ) {
         try {
-            val updateStreamJson = manifestParser.getUpdateStreamParamsJson(manifestUrl)
+            val updateStreamJson = parserService.getUpdateStreamParamsJson(manifestUrl)
 
             if (needsInitialSetup) {
-                val streamsJson = manifestParser.getStreamsJson()
+                val streamsJson = parserService.getStreamsJson()
 
                 webViewManager.sendInitialMessage()
                 webViewManager.setManifestUrl(manifestUrl)

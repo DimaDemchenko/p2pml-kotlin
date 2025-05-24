@@ -176,7 +176,7 @@ internal class HlsManifestParser(
         val stream = findStreamByRuntimeId(manifestUrl)
         // This should be fired if there is no master manifest
         if (stream == null) {
-            streams.add(Stream(runtimeId = manifestUrl, type = StreamTypes.MAIN, index = 0))
+            streams.add(Stream(runtimeId = manifestUrl, type = StreamTypes.MAIN, index = 0, null))
         }
 
         return updatedManifestBuilder.toString()
@@ -275,7 +275,7 @@ internal class HlsManifestParser(
         updatedManifestBuilder: StringBuilder,
     ) {
         val streamUrl = variant.url.toString()
-        streams.add(Stream(runtimeId = streamUrl, type = StreamTypes.MAIN, index = index))
+        streams.add(Stream(runtimeId = streamUrl, type = StreamTypes.MAIN, index = index, manifestUrl))
 
         replaceUrlInManifest(
             manifest,
@@ -294,7 +294,7 @@ internal class HlsManifestParser(
         updatedManifestBuilder: StringBuilder,
     ) {
         val streamUrl = rendition.url.toString()
-        streams.add(Stream(runtimeId = streamUrl, type = StreamTypes.SECONDARY, index = index))
+        streams.add(Stream(runtimeId = streamUrl, type = StreamTypes.SECONDARY, index = index, manifestUrl))
 
         replaceUrlInManifest(
             manifest,

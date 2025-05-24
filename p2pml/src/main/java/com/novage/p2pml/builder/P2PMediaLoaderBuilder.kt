@@ -18,39 +18,47 @@ class P2PMediaLoaderBuilder(
     private val customJsIfs = mutableListOf<Pair<String, Any>>()
     private var enableDebugLogs: Boolean = false
 
-    fun onReady(callback: OnP2PReadyCallback) = apply {
-        this.onReady = callback
-    }
+    fun onReady(callback: OnP2PReadyCallback) =
+        apply {
+            this.onReady = callback
+        }
 
-    fun onError(callback: OnP2PReadyErrorCallback) = apply {
-        this.onError = callback
-    }
+    fun onError(callback: OnP2PReadyErrorCallback) =
+        apply {
+            this.onError = callback
+        }
 
     /**
      * Supply core P2P config as JSON string.
      */
-    fun coreConfig(json: String) = apply {
-        this.coreConfigJson = json
-    }
+    fun coreConfig(json: String) =
+        apply {
+            this.coreConfigJson = json
+        }
 
     /**
      * Sets the local HTTP server port (default 8080).
      */
-    fun serverPort(port: Int) = apply {
-        this.serverPort = port
-    }
+    fun serverPort(port: Int) =
+        apply {
+            this.serverPort = port
+        }
 
     /**
      * Enable verbose debug logging.
      */
-    fun enableDebug() = apply {
-        this.enableDebugLogs = true
-    }
+    fun enableDebug() =
+        apply {
+            this.enableDebugLogs = true
+        }
 
     /**
      * Inject a custom Javascript interface into the WebView.
      */
-    fun addJavaScriptInterface(name: String, obj: Any) = apply {
+    fun addJavaScriptInterface(
+        name: String,
+        obj: Any,
+    ) = apply {
         customJsIfs += name to obj
     }
 
@@ -69,7 +77,7 @@ class P2PMediaLoaderBuilder(
             coreConfigJson = coreConfigJson,
             serverPort = serverPort,
             customJavaScriptInterfaces = customJsIfs,
-            enableDebugLogs = enableDebugLogs
+            enableDebugLogs = enableDebugLogs,
         )
     }
 }

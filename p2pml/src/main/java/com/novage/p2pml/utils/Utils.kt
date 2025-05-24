@@ -5,12 +5,58 @@ import com.novage.p2pml.Constants.HTTP_PREFIX
 import com.novage.p2pml.Constants.LOCALHOST
 import io.ktor.http.decodeURLQueryComponent
 import io.ktor.http.encodeURLParameter
+import io.ktor.http.encodeURLQueryComponent
 import io.ktor.server.application.ApplicationCall
 import io.ktor.util.decodeBase64String
 import io.ktor.util.encodeBase64
 import okhttp3.Request
 
 internal object Utils {
+    fun replaceToProxyUrl(
+        manifest: String,
+        baseManifestUrl: String,
+        originalUrl: String,
+        updatedManifestBuilder: StringBuilder,
+        serverPort: Int,
+        queryParam: String? = null,
+    ) {
+        val urlToFind = findUrlInManifest(manifest, originalUrl, baseManifestUrl)
+        val absoluteUrl =
+            getAbsoluteUrl(baseManifestUrl, originalUrl).encodeURLQueryComponent()
+        val newUrl =
+            if (queryParam != null) {
+                getUrl(serverPort, "$queryParam$absoluteUrl")
+            } else {
+                absoluteUrl
+            }
+
+        val startIndex =
+            updatedManifestBuilder
+                .indexOf(urlToFind)
+                .takeIf { it != -1 }
+                ?: throw IllegalStateException("URL not found in manifest: $originalUrl")
+        val endIndex = startIndex + urlToFind.length
+        updatedManifestBuilder.replace(startIndex, endIndex, newUrl)
+    }
+
+    fun findUrlInManifest(
+        manifest: String,
+        urlToFind: String,
+        manifestUrl: String,
+    ): String {
+        val baseManifestURL = manifestUrl.substringBeforeLast("/") + "/"
+        val relativeUrlToFind = urlToFind.removePrefix(baseManifestURL)
+
+        return when {
+            manifest.contains(urlToFind) -> urlToFind
+            manifest.contains(relativeUrlToFind) -> relativeUrlToFind
+            else -> throw IllegalStateException(
+                "URL not found in manifest. urlToFind:" +
+                    "$urlToFind, manifestUrl: $manifestUrl",
+            )
+        }
+    }
+
     fun getAbsoluteUrl(
         baseManifestUrl: String,
         mediaUri: String,
