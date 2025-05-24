@@ -15,10 +15,10 @@ internal data class ParserContext(
     val streamRegistry: StreamRegistry,
     val segmentRepo: SegmentRepository,
     val updateStore: UpdateParamsStore,
-    val playbackProvider: PlaybackProvider
+    val playbackProvider: PlaybackProvider,
 )
 
 data class ManifestDocument(
     val raw: String,
-    val builder: StringBuilder
+    val builder: StringBuilder,
 )

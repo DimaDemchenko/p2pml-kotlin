@@ -13,18 +13,20 @@ import com.novage.p2pml.utils.Utils.findUrlInManifest
 @UnstableApi
 internal class MediaPlaylistParser(
     serverPort: Int,
-): BasePlaylistParser(serverPort) {
+) : BasePlaylistParser(serverPort) {
+    override fun loadManifest(raw: String): ManifestDocument = ManifestDocument(raw, StringBuilder(raw))
 
-
-    override fun loadManifest(raw: String): ManifestDocument {
-        return ManifestDocument(raw, StringBuilder(raw))
-    }
-
-    override fun prepareParser(ctx: ParserContext, doc: ManifestDocument) {
+    override fun prepareParser(
+        ctx: ParserContext,
+        doc: ManifestDocument,
+    ) {
         ctx.segmentRepo.clearRuntimeIds()
     }
 
-    override suspend fun processEntries(ctx: ParserContext, doc: ManifestDocument) {
+    override suspend fun processEntries(
+        ctx: ParserContext,
+        doc: ManifestDocument,
+    ) {
         val mediaPlaylist = ctx.hlsPlaylist as HlsMediaPlaylist
         val manifestUrl = ctx.manifestUrl
 
@@ -81,9 +83,8 @@ internal class MediaPlaylistParser(
         if (stream != null) return
 
         ctx.streamRegistry.add(
-            Stream(runtimeId = variantUrl, type = StreamTypes.MAIN, index = 0, null)
+            Stream(runtimeId = variantUrl, type = StreamTypes.MAIN, index = 0, null),
         )
-
     }
 
     private fun updateStreamData(
@@ -122,7 +123,6 @@ internal class MediaPlaylistParser(
         val endTime = startTime + segmentDurationInSeconds
 
         val absoluteUrl = segment.getAbsoluteUrl(variantUrl)
-
 
         val newSegment =
             Segment(
@@ -180,7 +180,6 @@ internal class MediaPlaylistParser(
         )
     }
 
-
     private suspend fun getInitialStartTime(
         ctx: ParserContext,
         isLive: Boolean,
@@ -192,8 +191,5 @@ internal class MediaPlaylistParser(
             0.0
         }
 
-
-    override fun renderDocument(doc: ManifestDocument): String {
-        return doc.builder.toString()
-    }
+    override fun renderDocument(doc: ManifestDocument): String = doc.builder.toString()
 }

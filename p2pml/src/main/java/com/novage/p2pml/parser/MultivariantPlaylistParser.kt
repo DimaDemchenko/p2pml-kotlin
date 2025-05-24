@@ -11,12 +11,18 @@ import com.novage.p2pml.utils.Utils
 internal class MultivariantPlaylistParser(
     serverPort: Int,
 ) : BasePlaylistParser(serverPort) {
-
     override fun loadManifest(raw: String) = ManifestDocument(raw, StringBuilder(raw))
-    override fun prepareParser(ctx: ParserContext, doc: ManifestDocument) { }
+
+    override fun prepareParser(
+        ctx: ParserContext,
+        doc: ManifestDocument,
+    ) { }
 
     @OptIn(UnstableApi::class)
-    override suspend fun processEntries(ctx: ParserContext, doc: ManifestDocument) {
+    override suspend fun processEntries(
+        ctx: ParserContext,
+        doc: ManifestDocument,
+    ) {
         val playlist = ctx.hlsPlaylist as HlsMultivariantPlaylist
 
         playlist.variants.forEachIndexed { idx, v ->
@@ -53,7 +59,7 @@ internal class MultivariantPlaylistParser(
         ctx: ParserContext,
         variant: HlsMultivariantPlaylist.Variant,
         index: Int,
-        doc: ManifestDocument
+        doc: ManifestDocument,
     ) {
         val manifestUrl = ctx.manifestUrl
         val streamUrl = variant.url.toString()
@@ -75,7 +81,7 @@ internal class MultivariantPlaylistParser(
         ctx: ParserContext,
         rendition: HlsMultivariantPlaylist.Rendition,
         index: Int,
-        doc: ManifestDocument
+        doc: ManifestDocument,
     ) {
         val manifestUrl = ctx.manifestUrl
         val streamUrl = rendition.url.toString()
