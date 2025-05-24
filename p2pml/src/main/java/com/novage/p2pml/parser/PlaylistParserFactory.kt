@@ -1,6 +1,5 @@
 package com.novage.p2pml.parser
 
-import android.net.Uri
 import androidx.core.net.toUri
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.exoplayer.hls.playlist.HlsMediaPlaylist
@@ -22,22 +21,26 @@ internal class PlaylistParserFactory {
         segmentRepo: SegmentRepository,
         updateStore: UpdateParamsStore,
         playbackProvider: PlaybackProvider,
-        serverPort: Int
+        serverPort: Int,
     ): String {
         val parsed = coreParser.parse(manifestUrl.toUri(), rawManifest.byteInputStream())
-        val ctx = ParserContext(
-            manifestUrl, parsed,
-            streamRegistry, segmentRepo, updateStore,
-            playbackProvider
-        )
+        val ctx =
+            ParserContext(
+                manifestUrl,
+                parsed,
+                streamRegistry,
+                segmentRepo,
+                updateStore,
+                playbackProvider,
+            )
 
-        val parser: PlaylistParser = when (parsed) {
-            is HlsMediaPlaylist       -> MediaPlaylistParser(serverPort)
-            is HlsMultivariantPlaylist-> MultivariantPlaylistParser(serverPort)
-            else                      -> throw IllegalArgumentException("Unsupported HLS playlist type")
-        }
+        val parser: PlaylistParser =
+            when (parsed) {
+                is HlsMediaPlaylist -> MediaPlaylistParser(serverPort)
+                is HlsMultivariantPlaylist -> MultivariantPlaylistParser(serverPort)
+                else -> throw IllegalArgumentException("Unsupported HLS playlist type")
+            }
 
         return parser.parse(rawManifest, ctx)
     }
-
 }

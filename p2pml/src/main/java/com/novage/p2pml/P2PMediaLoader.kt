@@ -11,7 +11,6 @@ import com.novage.p2pml.interop.EventListener
 import com.novage.p2pml.interop.OnP2PReadyCallback
 import com.novage.p2pml.interop.OnP2PReadyErrorCallback
 import com.novage.p2pml.logger.Logger
-import com.novage.p2pml.parser.HlsManifestParser
 import com.novage.p2pml.providers.ExoPlayerPlaybackProvider
 import com.novage.p2pml.providers.ExternalPlaybackProvider
 import com.novage.p2pml.providers.PlaybackProvider
@@ -101,9 +100,7 @@ class P2PMediaLoader internal constructor(
      * @param exoPlayer ExoPlayer instance for media playback
      * @throws IllegalStateException if called in an invalid state
      */
-    fun start(
-        exoPlayer: ExoPlayer,
-    ) {
+    fun start(exoPlayer: ExoPlayer) {
         Logger.d(TAG, "Starting P2P Media Loader with ExoPlayer")
         prepareStart(context, ExoPlayerPlaybackProvider(exoPlayer))
     }
@@ -114,9 +111,7 @@ class P2PMediaLoader internal constructor(
      * @param getPlaybackInfo Function to retrieve playback information
      * @throws IllegalStateException if called in an invalid state
      */
-    fun start(
-        getPlaybackInfo: () -> PlaybackInfo,
-    ) {
+    fun start(getPlaybackInfo: () -> PlaybackInfo) {
         Logger.d(TAG, "Starting P2P Media Loader with playback info callback")
         prepareStart(context, ExternalPlaybackProvider(getPlaybackInfo))
     }

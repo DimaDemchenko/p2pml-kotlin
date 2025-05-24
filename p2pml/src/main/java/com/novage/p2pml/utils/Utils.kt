@@ -52,7 +52,7 @@ internal object Utils {
             manifest.contains(relativeUrlToFind) -> relativeUrlToFind
             else -> throw IllegalStateException(
                 "URL not found in manifest. urlToFind:" +
-                        "$urlToFind, manifestUrl: $manifestUrl",
+                    "$urlToFind, manifestUrl: $manifestUrl",
             )
         }
     }

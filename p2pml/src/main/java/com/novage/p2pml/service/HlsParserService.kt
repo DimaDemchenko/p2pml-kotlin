@@ -10,7 +10,7 @@ import kotlinx.serialization.json.Json
 @UnstableApi
 internal class HlsParserService(
     private val playbackProvider: PlaybackProvider,
-    private val serverPort: Int
+    private val serverPort: Int,
 ) {
     private val streamRegistry = StreamRegistry()
     private val segmentRepo = SegmentRepository()
@@ -18,11 +18,10 @@ internal class HlsParserService(
     private val playlistParserFactory = PlaylistParserFactory()
     private val mutex = Mutex()
 
-    suspend fun isCurrentSegment(
-        segmentRuntimeUrl: String,
-    ): Boolean = mutex.withLock {
-        segmentRepo.containsRuntimeId(segmentRuntimeUrl)
-    }
+    suspend fun isCurrentSegment(segmentRuntimeUrl: String): Boolean =
+        mutex.withLock {
+            segmentRepo.containsRuntimeId(segmentRuntimeUrl)
+        }
 
     suspend fun getUpdateStreamParamsJson(variantUrl: String): String? {
         mutex.withLock {
@@ -37,12 +36,10 @@ internal class HlsParserService(
             Json.encodeToString(streamRegistry.getAll())
         }
 
-    suspend fun doesManifestExist(
-        manifestUrl: String,
-    ): Boolean = mutex.withLock {
-        streamRegistry.doesManifestExist(manifestUrl)
-    }
-
+    suspend fun doesManifestExist(manifestUrl: String): Boolean =
+        mutex.withLock {
+            streamRegistry.doesManifestExist(manifestUrl)
+        }
 
     suspend fun reset() {
         mutex.withLock {
@@ -54,16 +51,17 @@ internal class HlsParserService(
 
     suspend fun parse(
         manifestUrl: String,
-        rawManifest: String
-    ): String = mutex.withLock {
-        return playlistParserFactory.parse(
-            manifestUrl,
-            rawManifest,
-            streamRegistry,
-            segmentRepo,
-            updateStore,
-            playbackProvider,
-            serverPort
-        )
-    }
+        rawManifest: String,
+    ): String =
+        mutex.withLock {
+            return playlistParserFactory.parse(
+                manifestUrl,
+                rawManifest,
+                streamRegistry,
+                segmentRepo,
+                updateStore,
+                playbackProvider,
+                serverPort,
+            )
+        }
 }
